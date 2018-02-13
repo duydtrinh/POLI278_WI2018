@@ -1,0 +1,127 @@
+---
+title: "GGPlot"
+author: "Duy Trinh"
+date: "January 23, 2018"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(ggplot2)
+library(ggthemes)
+library(RColorBrewer)
+```
+
+TABLE WAY
+
+Percentage | Male | Female
+-----------|------|--------
+First class|10    | 12
+Second class| 12 | 123
+
+COOL KIDS WAY
+
+
+# Problem 3
+## e/ 
+
+```{r}
+nsims <- 1000
+size <- 200
+beta <- c(0,5)
+betahat <- NA
+var <- NA
+se <- NA
+
+x <- cbind(rep(1,size), rnorm(size, mean=1, sd=1)) # Generate vector of 200 x from standard normal distribution
+
+for (i in 1:nsims){
+  y <- x%*%beta + rnorm(size, mean=0, sd=1)
+  reg.sim <- lm(y~x)
+  betahat[i] <- summary(reg.sim)$coef[2,1]
+  se[i] <- summary(reg.sim)$coef[2,2]
+  var[i] <- se[i]^2
+}
+```
+
+## h/
+
+Generate the plot dataframe
+
+```{r}
+simplot <- data.frame(betahat, se)
+simplot$overlap <- ifelse(betahat-1.96*se <= beta[2] & betahat+1.96*se >= beta[2], "Yes","No")
+```
+
+One can think of a ggplot as an object with multiple layers. The function `ggplot()` creates a base layer that contains the data and default graphical options; each succeeding command, followed by a + sign, adds another layer to the graph.
+
+For example, this command adds the points. Note how I include an option `(color="black")`to override the default.
+```{r}
+ggplot(simplot, aes(x=1:nsims, y=betahat, color=overlap)) +
+  geom_point(color="black")
+```
+Now I will add the error bars and highlight the true beta
+```{r}
+ggplot(simplot, aes(x=1:nsims, y=betahat, color=overlap)) +
+  geom_point(color="black") +
+  geom_errorbar(aes(ymin = betahat-1.96*se, ymax = betahat+1.96*se)) +
+  geom_hline(yintercept=5, size=1, linetype = "dashed")
+```
+Looks ugly. How about I resize it a little bit?
+```{r}
+ggplot(simplot, aes(x=1:nsims, y=betahat, color=overlap)) +
+  geom_point(color="black") +
+  geom_errorbar(aes(ymin = betahat-1.96*se, ymax = betahat+1.96*se)) +
+  geom_hline(yintercept=5, size=1, linetype = "dashed") +
+  scale_y_continuous(limits=c(4.5,5.5)) +
+  coord_fixed(400)
+```
+Now I'll add some titles and labels to it
+```{r}
+ggplot(simplot, aes(x=1:nsims, y=betahat, color=overlap)) +
+  geom_point(color="black") +
+  geom_errorbar(aes(ymin = betahat-1.96*se, ymax = betahat+1.96*se)) +
+  geom_hline(yintercept=5, size=1, linetype = "dashed") +
+  scale_y_continuous(limits=c(4.5,5.5)) +
+  coord_fixed(400) +
+  theme(legend.position="bottom") +
+  labs(title ="Confidence intervals for 1000 simulations", x = "Simulation", y = "Simulated beta")
+```
+There are many, many, *many* ways to customize the plot. Explore away!
+```{r}
+ggplot(simplot, aes(x=1:nsims, y=betahat, color=overlap)) +
+  geom_point(color="black") +
+  geom_errorbar(aes(ymin = betahat-1.96*se, ymax = betahat+1.96*se)) +
+  geom_hline(yintercept=5, size=1, linetype = "dashed") +
+  scale_y_continuous(limits=c(4.5,5.5)) +
+  coord_fixed(400) +
+  theme(plot.title=element_text(size=18,face="bold",hjust=0.5), legend.position="bottom") +
+  theme(axis.ticks = element_blank(), legend.title = element_blank()) +
+  labs(title ="Confidence intervals for 1000 simulations", x = "Simulation", y = "Simulated beta")
+```
+With a couple of additional packages such as `RColorBrewer` and `ggthemes`, we can create wonders at will(or monstrosities, if you so wish)
+```{r}
+ggplot(simplot, aes(x=1:nsims, y=betahat, color=overlap)) +
+  geom_point(color="black") +
+  geom_errorbar(aes(ymin = betahat-1.96*se, ymax = betahat+1.96*se)) +
+  geom_hline(yintercept=5, size=1, linetype = "dashed") +
+  scale_y_continuous(limits=c(4.5,5.5)) +
+  coord_fixed(400) +
+  theme(plot.title=element_text(size=18,face="bold",hjust=0.5), legend.position="bottom") +
+  theme(axis.ticks = element_blank(), legend.title = element_blank()) +
+  scale_color_brewer(palette="Dark2") + 
+  labs(title ="Confidence intervals for 1000 simulations", x = "Simulation", y = "Simulated beta")
+```
+
+```{r}
+ggplot(simplot, aes(x=1:nsims, y=betahat, color=overlap)) +
+  geom_point(color="black") +
+  geom_errorbar(aes(ymin = betahat-1.96*se, ymax = betahat+1.96*se)) +
+  geom_hline(yintercept=5, size=1, linetype = "dashed") +
+  scale_y_continuous(limits=c(4.5,5.5)) +
+  coord_fixed(400) +
+  theme(plot.title=element_text(size=18,face="bold",hjust=0.5), legend.position="bottom") +
+  theme(axis.ticks = element_blank(), legend.title = element_blank()) +
+  theme_excel() + scale_color_excel() +
+  labs(title ="Confidence intervals for 1000 simulations", x = "Simulation", y = "Simulated beta")
+```
